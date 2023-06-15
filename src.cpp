@@ -6,15 +6,15 @@ using namespace std;
 //! user harus diberikan dana awal 8k-10k untuk beli apa apa
 unsigned int BALANCE_AMOUNT = 8000;
 int FERTILIZER_AMOUNT = 0;
-short int FERTILIZER_TYPE = 0;
 short int PLANTS_OWNED = 0;
 // TODO buat function int untuk memproses intensitas cahaya matahari
-
+// TODO buat array untuk memproses hari spesial untuk xp
 struct plant
 {
     int plantID;
     string plantName;
     int plantXP = 0;
+    int plantLevel = 0;
     int soilRichness = 0;
     int soilWetness = 0;
     struct fertilizer
@@ -22,7 +22,7 @@ struct plant
         int nitrogen;
         int phosporus;
         int kalium;
-    } fertilizerPercentage = {0, 0, 0}; // initial value for fertilizer amount in the soil
+    } soilFertilityPercentage = {0, 0, 0}; // initial value for fertilizer amount in the soil
     plant *next;
     void waterPlant()
     {
@@ -45,6 +45,8 @@ struct plant
     {
         cout << "\nNama baru: ";
         getline(cin >> ws, plantName);
+        cout << "\nBerhasil Menamai tanaman anda menjadi: " << plantName << endl;
+        system("pause");
     }
 } *head, *onlinePlant;
 
@@ -60,6 +62,7 @@ void addPlant(plant **reference, string name)
     if (*reference == nullptr)
     {
         *reference = newPlant;
+        onlinePlant = *reference;
         return;
     }
     while (lastPlantNode->next != nullptr)
@@ -67,10 +70,13 @@ void addPlant(plant **reference, string name)
         lastPlantNode = lastPlantNode->next;
     }
     lastPlantNode->next = newPlant;
+    onlinePlant = lastPlantNode->next;
+    return;
 }
 
 int findPlantID(plant **reference, int plantID)
 {
+
     plant *currentPlant = *reference;
     while (currentPlant != nullptr)
     {
@@ -85,6 +91,81 @@ int findPlantID(plant **reference, int plantID)
     return 0;
 }
 
+void buy(int buyID)
+{
+    switch (buyID)
+    {
+    case 1:
+        if (BALANCE_AMOUNT >= 5000)
+        {
+            string getNewPlantName;
+            system("cls");
+            cout << "\n\nPembelian tanaman berhasil\n";
+            cout << "\nsilahkan beri Nama: ";
+            // getline(cin >> ws, getNewPlantName);
+            addPlant(&head, "");
+            // cout << "onlinePlant name: " << onlinePlant->plantName;
+            onlinePlant->rename();
+        }
+        else
+        {
+            system("cls");
+            cout << "Uang anda tidak mencukupi\n";
+            system("pause");
+        }
+
+        break;
+    case 2:
+    {
+        if (BALANCE_AMOUNT >= 600)
+        {
+            FERTILIZER_AMOUNT++;
+            system("cls");
+            cout << "Berhasil membeli pupuk\n";
+            system("pause");
+        }
+        else
+        {
+            system("cls");
+            cout << "Uang anda tidak mencukupi\n";
+            system("pause");
+        }
+
+        break;
+    }
+    default:
+        break;
+    }
+}
+
+void buyToolsMenu()
+{
+    char userInput;
+    while (true)
+    {
+        system("cls");
+        cout << "1. tanaman \t5000\n";
+        cout << "2. pupuk\t600\n";
+        cout << "3. atur suhu 1 kali\t1200\n";
+        cout << "4. ganti tanah\t200\n";
+        cout << "\n0. kembali";
+        switch (userInput)
+        {
+        case '1':
+            // ! debug dulu function buy();
+            buy(1);
+            break;
+        case '0':
+        {
+            return;
+        }
+        default:
+            break;
+        }
+        userInput = getch();
+    }
+}
+
 void shopMainMenu()
 {
     char shopMenuChoice;
@@ -94,7 +175,7 @@ void shopMainMenu()
         switch (shopMenuChoice)
         {
         case '1':
-            // TODO buat menu beli perlengkapan
+            buyToolsMenu();
             break;
         case '2':
             // TODO buat menu jual tanaman
@@ -106,6 +187,7 @@ void shopMainMenu()
 
             break;
         }
+        system("cls");
 
         cout << "==== Toko Perlengkapan Kebun ====\n";
         cout << "1. beli perlengkapan\n";
@@ -123,11 +205,11 @@ void plantsMenu()
     {
         // cout << commandNum << endl; //debugging
         system("cls");
-        cout << "==== tanaman: " << onlinePlant->plantName << " ====" << endl; // TODO ubah head jadi plant yang online
-        cout << "perintah: \n";
+        cout << "==== tanaman: " << onlinePlant->plantName << " ====" << endl;
+        cout << "Perintah: \n";
         cout << "1. Siram Tanaman\n";
         cout << "2. Lewati Hari\n";
-        cout << "3. Ubah Nama Tanaman\n";
+        cout << "3. Ubah Nama Tanaman\n\n";
         cout << "0. Kembali\n";
 
         switch (commandNum)
@@ -170,7 +252,6 @@ void plantsMenu()
         }
         case '3':
         {
-            cout << "\nanda telah menamai ulang tanaman anda menjadi: " << onlinePlant->plantName << endl;
             break;
         }
         default:
@@ -193,11 +274,16 @@ void plantsListMenu(plant **reference)
         currentPlant = currentPlant->next;
         i++;
     }
+    cout << "\n0. Kembali\n";
 
     do
     {
-        cout << "\npilih tanaman: ";
+        cout << "\nPilih Tanaman: (Tekan Enter)";
         cin >> userInput;
+        if (userInput == 0)
+        {
+            return;
+        }
     } while (findPlantID(&head, userInput) == 0);
 
     plantsMenu();
@@ -231,14 +317,14 @@ int main()
         cout << "Nama: ";
         getline(cin >> ws, new_plantName);
         addPlant(&head, new_plantName);
-        cout << "\nNama tanaman pertama anda adalah: " << head->plantName << endl;
+        cout << "\nNama tanaman pertama anda adalah: " << onlinePlant->plantName << endl;
         system("pause");
     }
 
     while (true)
     {
         system("cls");
-        cout << "==== Main Menu ====\n\n";
+        cout << "==== Main Menu ====\n";
         cout << "Pilihan:\n";
         cout << "1. Kebun\n";
         cout << "2. Toko\n";
