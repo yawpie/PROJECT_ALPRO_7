@@ -16,50 +16,34 @@ struct plant
     int plantID;
     string plantName;
     int plantXP = 0;
-    int plantLevelUpThreshold = 1;
-    int plantLevel = 1;
-    int soilRichness = 10;
-    int soilWetness = 30;
-    int plantHealth = 100;
+    int plantLevel = 0;
+    int soilRichness = 0;
+    int soilWetness = 0;
+    // int fertilizer[3] = {0, 0, 0}; // initial value for fertilizer amount in the soil
     plant *next;
-    void levelUp()
-    {
-        plantLevel++;
-        plantLevelUpThreshold * 2;
-    }
     void waterPlant()
     {
         // jumlah xp yang didapat ketika memberi air bergantung pada jumlah pupuk dan cahaya yang ada di tanaman
         // soilRichness sebaiknya nilainya dilimit 1000, nanti nilai ini dibagi dengan sekian untuk dimasukin ke if else nya
+
         // ! bagian ini belum slesai
-        plantXP += 2.0 * (soilRichness / 10.0);
-        soilWetness += 10;
-        if (soilWetness >= 70 && soilWetness < 80)
+
+        int xpRisingModifier = soilRichness % plantLevel;
+        if (xpRisingModifier <= 10)
         {
-            plantHealth -= 8;
+            plantXP += 1 + plantName[2] * xpRisingModifier;
         }
-        else if (soilWetness >= 80 && soilWetness < 95)
+        else if (xpRisingModifier <= 20 && xpRisingModifier >= 11)
         {
-            plantHealth -= 15;
-        }
-        else if (soilWetness >= 95)
-        {
-            plantHealth -= 30;
-        }
-        else if (soilWetness >= 100)
-        {
-            plantHealth -= 45;
+            plantXP += 2 + plantName[2] * xpRisingModifier;
         }
     }
     void fertilize() //! belum slesai
     {
-        if (soilRichness >= 40)
-        {
-            system("pause");
-            cout << "pupuk terlalu banyak\n";
-            return;
-        }
-        soilRichness += 15;
+        int fertilizerModifier[5] = {15, 30, 45, 75, 120};
+        // user harus mempunyai dulu pupuk sebelum bisa memberi pupuk
+        int i = 0;
+        // todo bikin untuk array nya
     }
     void rename() // jika sudah pernah rename sekali, user harus membayar untuk rename lagi
     {
@@ -144,7 +128,6 @@ void buy(int buyID)
             BALANCE_AMOUNT -= 600;
             system("cls");
             cout << "Berhasil membeli pupuk\n";
-            cout << "Jumlah pupuk anda sekarang: " << FERTILIZER_AMOUNT << endl;
             system("pause");
         }
         else
@@ -238,6 +221,74 @@ void buyToolsMenu()
     }
 }
 
+void sellPlant(plant **reference, int plantID)
+{
+    plant *currentPlant = *reference;
+    plant *prevPlant = nullptr;
+
+    while (currentPlant != nullptr)
+    {
+        if (currentPlant->plantID == plantID)
+        {
+            if (PLANTS_OWNED <= 1)
+            {
+                cout << "Tidak dapat menjual tanaman. Setidaknya harus ada 1 tanaman tersisa di kebun.\n";
+                return;
+            }
+
+            if (prevPlant == nullptr)
+            {
+                *reference = currentPlant->next;
+            }
+            else
+            {
+                prevPlant->next = currentPlant->next;
+            }
+            BALANCE_AMOUNT += 2500;
+            PLANTS_OWNED--;
+            delete currentPlant;
+            cout << "Tanaman berhasil dijual\n";
+            PLANTS_OWNED--;
+            cout << "Saldo Anda sebelumnya: " << BALANCE_AMOUNT - 2500 << endl; 
+            cout << "Saldo Anda saat ini: " << BALANCE_AMOUNT << endl; 
+            return;
+        }
+        prevPlant = currentPlant;
+        currentPlant = currentPlant->next;
+    }
+
+    cout << "Tanaman tidak ditemukan\n";
+}
+
+void sellPlantMenu(plant **reference)
+{
+    system("cls");
+    int userInput = 0;
+    int i = 0;
+    plant *currentPlant = *reference;
+
+    while (currentPlant != nullptr)
+    {
+        cout << i + 1 << ". " << currentPlant->plantName << endl;
+        currentPlant = currentPlant->next;
+        i++;
+    }
+    cout << "\n0. Kembali\n";
+
+    do
+    {
+        cout << "\nPilih Tanaman yang ingin dijual: (Tekan Enter)";
+        cin >> userInput;
+        if (userInput == 0)
+        {
+            return;
+        }
+    } while (findPlantID(userInput) == 0);
+
+    sellPlant(&head, userInput);
+    system("pause");
+}
+
 void shopMainMenu()
 {
     char shopMenuChoice;
@@ -250,7 +301,7 @@ void shopMainMenu()
             buyToolsMenu();
             break;
         case '2':
-            // TODO buat menu jual tanaman
+            sellPlantMenu(&head);
             break;
         case '0':
             return;
@@ -265,7 +316,7 @@ void shopMainMenu()
         cout << "1. beli perlengkapan\n";
         cout << "2. jual tanaman\n";
         cout << "0. kembali\n";
-        // * ketika ingin jual tanaman, akan melihat variabel plantHealth, semakin rendah health nya, semakin rendah harga jualnya. jika planthealth = 0 maka harga jual adalah 0
+
         shopMenuChoice = getch();
     }
 }
@@ -276,17 +327,9 @@ void plantsMenu()
     while (true)
     {
         // cout << commandNum << endl; //debugging
-        if (onlinePlant->plantHealth <= 0)
-        {
-            // todo bikin function yang hilang perintahnya jika tanamannya mati
-        }
-
         system("cls");
         cout << "==== tanaman: " << onlinePlant->plantName << " ====" << endl;
-        cout << "Persentase Kesehatan Tanaman: " << onlinePlant->plantHealth << endl;
-        cout << "Persentase Kebasahan Tanaman: " << onlinePlant->soilWetness << endl;
-        cout << "Persentase Kandungan Pupuk: " << onlinePlant->soilRichness << endl;
-        cout << "\nPerintah: \n";
+        cout << "Perintah: \n";
         cout << "1. Siram Tanaman\n";
         cout << "2. Lewati Hari\n";
         cout << "3. Ubah Nama Tanaman\n\n";
