@@ -1,7 +1,7 @@
 #include <iostream>
 // #include <thread>
 #include <conio.h>
-#include <string>
+
 using namespace std;
 
 //! user harus diberikan dana awal 8k-10k untuk beli apa apa
@@ -276,7 +276,7 @@ void plantsMenu()
         }
         case '2':
         {
-            onlinePlant->fertilize(FERTILIZER_AMOUNT);
+            onlinePlant->fertilize();
             break;
         }
         case '3':
