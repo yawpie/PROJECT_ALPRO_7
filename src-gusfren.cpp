@@ -226,15 +226,15 @@ void sellPlant(plant **reference, int plantID)
     plant *currentPlant = *reference;
     plant *prevPlant = nullptr;
 
+    if (PLANTS_OWNED <= 1)
+    {
+        cout << "Tidak dapat menjual tanaman. Setidaknya harus ada 1 tanaman tersisa di kebun.\n";
+        return;
+    }
     while (currentPlant != nullptr)
     {
         if (currentPlant->plantID == plantID)
         {
-            if (PLANTS_OWNED <= 1)
-            {
-                cout << "Tidak dapat menjual tanaman. Setidaknya harus ada 1 tanaman tersisa di kebun.\n";
-                return;
-            }
 
             if (prevPlant == nullptr)
             {
@@ -249,8 +249,8 @@ void sellPlant(plant **reference, int plantID)
             delete currentPlant;
             cout << "Tanaman berhasil dijual\n";
             PLANTS_OWNED--;
-            cout << "Saldo Anda sebelumnya: " << BALANCE_AMOUNT - 2500 << endl; 
-            cout << "Saldo Anda saat ini: " << BALANCE_AMOUNT << endl; 
+            cout << "Saldo Anda sebelumnya: " << BALANCE_AMOUNT - 2500 << endl;
+            cout << "Saldo Anda saat ini: " << BALANCE_AMOUNT << endl;
             return;
         }
         prevPlant = currentPlant;

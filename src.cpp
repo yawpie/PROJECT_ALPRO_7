@@ -9,8 +9,9 @@ unsigned int BALANCE_AMOUNT = 8000;
 int FERTILIZER_AMOUNT = 0;
 short int PLANTS_OWNED = 0;
 short int GLOBAL_TEMPERATURE = 26;
-// TODO buat function int untuk memproses intensitas cahaya matahari
-// TODO buat array untuk memproses hari spesial untuk xp
+short int CURRENT_DAY = 0;
+string CURRENT_DAY_NAME[7] = {"senin", "selasa", "rabu", "kamis", "jumat", "sabtu", "minggu"};
+// todo bikin sistem untuk skip hari atau setelah menyiram tanaman beberapa kali bisa skip hari
 struct plant
 {
     int plantID;
@@ -31,8 +32,15 @@ struct plant
     {
         // jumlah xp yang didapat ketika memberi air bergantung pada jumlah pupuk dan cahaya yang ada di tanaman
         // soilRichness sebaiknya nilainya dilimit 1000, nanti nilai ini dibagi dengan sekian untuk dimasukin ke if else nya
-        // ! bagian ini belum slesai
-        plantXP += 2.0 * (soilRichness / 10.0);
+        plantXP += 2 + 0.35 * soilRichness;
+        if (soilRichness > 0)
+        {
+            soilRichness -= 20;
+        }
+        else
+        {
+            soilRichness = 0;
+        }
         soilWetness += 10;
         if (soilWetness >= 70 && soilWetness < 80)
         {
@@ -53,13 +61,13 @@ struct plant
     }
     void fertilize() //! belum slesai
     {
-        if (soilRichness >= 40)
+        if (soilRichness >= 100)
         {
             system("pause");
-            cout << "pupuk terlalu banyak\n";
+            cout << "pupuk terlalu banyak, tidak dapat memberi lebih banyak\n";
             return;
         }
-        soilRichness += 15;
+        soilRichness += 34;
     }
     void rename() // jika sudah pernah rename sekali, user harus membayar untuk rename lagi
     {
@@ -238,6 +246,75 @@ void buyToolsMenu()
     }
 }
 
+void sellPlant(int plantID)
+{
+    plant *currentPlant = head;
+    plant *prevPlant = nullptr;
+
+    if (PLANTS_OWNED <= 1)
+    {
+        cout << "Tidak dapat menjual tanaman. Setidaknya harus ada 1 tanaman tersisa di kebun.\n";
+        return;
+    }
+    while (currentPlant != nullptr)
+    {
+        if (currentPlant->plantID == plantID)
+        {
+
+            if (prevPlant == nullptr)
+            {
+                head = currentPlant->next;
+            }
+            else
+            {
+                prevPlant->next = currentPlant->next;
+            }
+            BALANCE_AMOUNT += 2500;
+            // todo ketika ingin jual tanaman, akan melihat variabel plantHealth, semakin rendah health nya, semakin rendah harga jualnya. jika planthealth = 0 maka harga jual adalah 0
+            PLANTS_OWNED--;
+            delete currentPlant;
+            cout << "Tanaman berhasil dijual\n";
+            PLANTS_OWNED--;
+            cout << "Saldo Anda sebelumnya: " << BALANCE_AMOUNT - 2500 << endl;
+            cout << "Saldo Anda saat ini: " << BALANCE_AMOUNT << endl;
+            return;
+        }
+        prevPlant = currentPlant;
+        currentPlant = currentPlant->next;
+    }
+
+    cout << "Tanaman tidak ditemukan\n";
+}
+
+void sellPlantMenu()
+{
+    system("cls");
+    int userInput = 0;
+    int i = 0;
+    plant *currentPlant = head;
+
+    while (currentPlant != nullptr)
+    {
+        cout << i + 1 << ". " << currentPlant->plantName << endl;
+        currentPlant = currentPlant->next;
+        i++;
+    }
+    cout << "\n0. Kembali\n";
+
+    do
+    {
+        cout << "\nPilih Tanaman yang ingin dijual (Tekan Enter): ";
+        cin >> userInput;
+        if (userInput == 0)
+        {
+            return;
+        }
+    } while (findPlantID(userInput) == 0);
+
+    sellPlant(userInput);
+    system("pause");
+}
+
 void shopMainMenu()
 {
     char shopMenuChoice;
@@ -250,7 +327,7 @@ void shopMainMenu()
             buyToolsMenu();
             break;
         case '2':
-            // TODO buat menu jual tanaman
+            sellPlantMenu();
             break;
         case '0':
             return;
@@ -265,78 +342,63 @@ void shopMainMenu()
         cout << "1. beli perlengkapan\n";
         cout << "2. jual tanaman\n";
         cout << "0. kembali\n";
-        // * ketika ingin jual tanaman, akan melihat variabel plantHealth, semakin rendah health nya, semakin rendah harga jualnya. jika planthealth = 0 maka harga jual adalah 0
         shopMenuChoice = getch();
     }
 }
 
-void plantsMenu()
+void plantsMenu(int &health)
 {
     char commandNum;
     while (true)
     {
-        // cout << commandNum << endl; //debugging
-        if (onlinePlant->plantHealth <= 0)
-        {
-            // todo bikin function yang hilang perintahnya jika tanamannya mati
-        }
-
         system("cls");
         cout << "==== tanaman: " << onlinePlant->plantName << " ====" << endl;
-        cout << "Persentase Kesehatan Tanaman: " << onlinePlant->plantHealth << endl;
-        cout << "Persentase Kebasahan Tanaman: " << onlinePlant->soilWetness << endl;
-        cout << "Persentase Kandungan Pupuk: " << onlinePlant->soilRichness << endl;
-        cout << "\nPerintah: \n";
-        cout << "1. Siram Tanaman\n";
-        cout << "2. Lewati Hari\n";
-        cout << "3. Ubah Nama Tanaman\n\n";
+        if (health >= 0)
+        {
+            cout << "Persentase Kesehatan Tanaman: " << onlinePlant->plantHealth << endl;
+            cout << "Persentase Kebasahan Tanaman: " << onlinePlant->soilWetness << endl;
+            cout << "Persentase Kandungan Pupuk: " << onlinePlant->soilRichness << endl;
+            cout << "\nPerintah: \n";
+            cout << "1. Siram Tanaman\n";
+            cout << "2. Lewati Hari\n";
+            cout << "3. Ubah Nama Tanaman\n\n";
+            switch (commandNum)
+            {
+            case '1':
+            {
+                onlinePlant->waterPlant();
+                cout << "Anda telah menyiram\n";
+                break;
+            }
+            case '2':
+            {
+                cout << "\nAnda telah melewati satu hari\n";
+                break;
+            }
+            case '3':
+            {
+                onlinePlant->rename();
+                break;
+            }
+            case '0':
+            {
+                return;
+                break;
+            }
+            default:
+                break;
+            }
+        }
+        else
+        {
+            cout << "\nTanaman mati\n";
+            if (commandNum == '0')
+            {
+                return;
+            }
+        }
         cout << "0. Kembali\n";
 
-        switch (commandNum)
-        {
-        case '1':
-        {
-            onlinePlant->waterPlant();
-            break;
-        }
-        case '2':
-        {
-            onlinePlant->fertilize();
-            break;
-        }
-        case '3':
-        {
-            onlinePlant->rename();
-            break;
-        }
-        case '0':
-        {
-            return;
-            break;
-        }
-        default:
-            break;
-        }
-
-        switch (commandNum)
-        {
-        case '1':
-        {
-            cout << "\nAnda telah menyiram\n";
-            break;
-        }
-        case '2':
-        {
-            cout << "\nAnda telah melewati satu hari\n";
-            break;
-        }
-        case '3':
-        {
-            break;
-        }
-        default:
-            break;
-        }
         commandNum = getch();
         cout << endl;
     }
@@ -366,29 +428,13 @@ void plantsListMenu()
         }
     } while (findPlantID(userInput) == 0);
 
-    plantsMenu();
-}
-
-/*
-    Function ini dipake untuk mengolah data cuaca yang
-    ada sekarang, kemudian nanti akan mengubah cuaca di
-    kondisi berikutnya
-
-    function ini akan berjalan terus menerus selama
-    program berjalan dengan menggunakan fitur std::thread
-    kemudian ketika dibutuhkan data cuaca, akan berhenti
-    sejenak kemudian melanjutkannya
-*/
-void weatherNextCycle(char seed) // TODO slesaikan fitur cuaca
-{
-    while (true)
-    {
-    }
+    plantsMenu(onlinePlant->plantHealth);
 }
 
 int main()
 {
     char mainMenuChoice;
+    char exitMenuChoice;
     string new_plantName;
     if (PLANTS_OWNED == 0)
     {
@@ -408,8 +454,7 @@ int main()
         cout << "Pilihan:\n";
         cout << "1. Kebun\n";
         cout << "2. Toko\n";
-        cout << "3. Pengaturan\n\n";
-        cout << "0. Exit\n";
+        cout << "\n0. Exit\n";
         mainMenuChoice = getch();
 
         if (mainMenuChoice == '1')
@@ -420,18 +465,16 @@ int main()
         {
             shopMainMenu();
         }
-        else if (mainMenuChoice == '3')
-        {
-            // TODO bikin fitur settings stelah semua logic jadi
-        }
         else if (mainMenuChoice == '0')
         {
-            break;
+            cout << "\nApakah anda yakin ingin keluar? (Y/N) ";
+            cin >> exitMenuChoice;
+            if (exitMenuChoice == 'y' || exitMenuChoice == 'Y')
+            {
+                cout << "\nSee you next time\n\n";
+                system("pause");
+                return 0;
+            }
         }
     }
-
-    system("cls");
-    cout << "See you next time\n\n";
-    system("pause");
-    return 0;
 }
