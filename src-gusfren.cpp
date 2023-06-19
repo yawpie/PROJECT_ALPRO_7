@@ -9,65 +9,41 @@ unsigned int BALANCE_AMOUNT = 8000;
 int FERTILIZER_AMOUNT = 0;
 short int PLANTS_OWNED = 0;
 short int GLOBAL_TEMPERATURE = 26;
-short int CURRENT_DAY = 0;
-string CURRENT_DAY_NAME[7] = {"senin", "selasa", "rabu", "kamis", "jumat", "sabtu", "minggu"};
-// todo bikin sistem untuk skip hari atau setelah menyiram tanaman beberapa kali bisa skip hari
+// TODO buat function int untuk memproses intensitas cahaya matahari
+// TODO buat array untuk memproses hari spesial untuk xp
 struct plant
 {
     int plantID;
     string plantName;
     int plantXP = 0;
-    int plantLevelUpThreshold = 1;
-    int plantLevel = 1;
-    int soilRichness = 10;
-    int soilWetness = 30;
-    int plantHealth = 100;
+    int plantLevel = 0;
+    int soilRichness = 0;
+    int soilWetness = 0;
+    // int fertilizer[3] = {0, 0, 0}; // initial value for fertilizer amount in the soil
     plant *next;
-    void levelUp()
-    {
-        plantLevel++;
-        plantLevelUpThreshold * 2;
-    }
     void waterPlant()
     {
         // jumlah xp yang didapat ketika memberi air bergantung pada jumlah pupuk dan cahaya yang ada di tanaman
         // soilRichness sebaiknya nilainya dilimit 1000, nanti nilai ini dibagi dengan sekian untuk dimasukin ke if else nya
-        plantXP += 2 + 0.35 * soilRichness;
-        if (soilRichness > 0)
+
+        // ! bagian ini belum slesai
+
+        int xpRisingModifier = soilRichness % plantLevel;
+        if (xpRisingModifier <= 10)
         {
-            soilRichness -= 20;
+            plantXP += 1 + plantName[2] * xpRisingModifier;
         }
-        else
+        else if (xpRisingModifier <= 20 && xpRisingModifier >= 11)
         {
-            soilRichness = 0;
-        }
-        soilWetness += 10;
-        if (soilWetness >= 70 && soilWetness < 80)
-        {
-            plantHealth -= 8;
-        }
-        else if (soilWetness >= 80 && soilWetness < 95)
-        {
-            plantHealth -= 15;
-        }
-        else if (soilWetness >= 95)
-        {
-            plantHealth -= 30;
-        }
-        else if (soilWetness >= 100)
-        {
-            plantHealth -= 45;
+            plantXP += 2 + plantName[2] * xpRisingModifier;
         }
     }
     void fertilize() //! belum slesai
     {
-        if (soilRichness >= 100)
-        {
-            system("pause");
-            cout << "pupuk terlalu banyak, tidak dapat memberi lebih banyak\n";
-            return;
-        }
-        soilRichness += 34;
+        int fertilizerModifier[5] = {15, 30, 45, 75, 120};
+        // user harus mempunyai dulu pupuk sebelum bisa memberi pupuk
+        int i = 0;
+        // todo bikin untuk array nya
     }
     void rename() // jika sudah pernah rename sekali, user harus membayar untuk rename lagi
     {
@@ -152,7 +128,6 @@ void buy(int buyID)
             BALANCE_AMOUNT -= 600;
             system("cls");
             cout << "Berhasil membeli pupuk\n";
-            cout << "Jumlah pupuk anda sekarang: " << FERTILIZER_AMOUNT << endl;
             system("pause");
         }
         else
@@ -246,9 +221,9 @@ void buyToolsMenu()
     }
 }
 
-void sellPlant(int plantID)
+void sellPlant(plant **reference, int plantID)
 {
-    plant *currentPlant = head;
+    plant *currentPlant = *reference;
     plant *prevPlant = nullptr;
 
     if (PLANTS_OWNED <= 1)
@@ -263,14 +238,13 @@ void sellPlant(int plantID)
 
             if (prevPlant == nullptr)
             {
-                head = currentPlant->next;
+                *reference = currentPlant->next;
             }
             else
             {
                 prevPlant->next = currentPlant->next;
             }
             BALANCE_AMOUNT += 2500;
-            // todo ketika ingin jual tanaman, akan melihat variabel plantHealth, semakin rendah health nya, semakin rendah harga jualnya. jika planthealth = 0 maka harga jual adalah 0
             PLANTS_OWNED--;
             delete currentPlant;
             cout << "Tanaman berhasil dijual\n";
@@ -286,12 +260,12 @@ void sellPlant(int plantID)
     cout << "Tanaman tidak ditemukan\n";
 }
 
-void sellPlantMenu()
+void sellPlantMenu(plant **reference)
 {
     system("cls");
     int userInput = 0;
     int i = 0;
-    plant *currentPlant = head;
+    plant *currentPlant = *reference;
 
     while (currentPlant != nullptr)
     {
@@ -303,7 +277,7 @@ void sellPlantMenu()
 
     do
     {
-        cout << "\nPilih Tanaman yang ingin dijual (Tekan Enter): ";
+        cout << "\nPilih Tanaman yang ingin dijual: (Tekan Enter)";
         cin >> userInput;
         if (userInput == 0)
         {
@@ -311,7 +285,7 @@ void sellPlantMenu()
         }
     } while (findPlantID(userInput) == 0);
 
-    sellPlant(userInput);
+    sellPlant(&head, userInput);
     system("pause");
 }
 
@@ -327,7 +301,7 @@ void shopMainMenu()
             buyToolsMenu();
             break;
         case '2':
-            sellPlantMenu();
+            sellPlantMenu(&head);
             break;
         case '0':
             return;
@@ -342,63 +316,70 @@ void shopMainMenu()
         cout << "1. beli perlengkapan\n";
         cout << "2. jual tanaman\n";
         cout << "0. kembali\n";
+
         shopMenuChoice = getch();
     }
 }
 
-void plantsMenu(int &health)
+void plantsMenu()
 {
     char commandNum;
     while (true)
     {
+        // cout << commandNum << endl; //debugging
         system("cls");
         cout << "==== tanaman: " << onlinePlant->plantName << " ====" << endl;
-        if (health >= 0)
-        {
-            cout << "Persentase Kesehatan Tanaman: " << onlinePlant->plantHealth << endl;
-            cout << "Persentase Kebasahan Tanaman: " << onlinePlant->soilWetness << endl;
-            cout << "Persentase Kandungan Pupuk: " << onlinePlant->soilRichness << endl;
-            cout << "\nPerintah: \n";
-            cout << "1. Siram Tanaman\n";
-            cout << "2. Lewati Hari\n";
-            cout << "3. Ubah Nama Tanaman\n\n";
-            switch (commandNum)
-            {
-            case '1':
-            {
-                onlinePlant->waterPlant();
-                cout << "Anda telah menyiram\n";
-                break;
-            }
-            case '2':
-            {
-                cout << "\nAnda telah melewati satu hari\n";
-                break;
-            }
-            case '3':
-            {
-                onlinePlant->rename();
-                break;
-            }
-            case '0':
-            {
-                return;
-                break;
-            }
-            default:
-                break;
-            }
-        }
-        else
-        {
-            cout << "\nTanaman mati\n";
-            if (commandNum == '0')
-            {
-                return;
-            }
-        }
+        cout << "Perintah: \n";
+        cout << "1. Siram Tanaman\n";
+        cout << "2. Lewati Hari\n";
+        cout << "3. Ubah Nama Tanaman\n\n";
         cout << "0. Kembali\n";
 
+        switch (commandNum)
+        {
+        case '1':
+        {
+            onlinePlant->waterPlant();
+            break;
+        }
+        case '2':
+        {
+            onlinePlant->fertilize();
+            break;
+        }
+        case '3':
+        {
+            onlinePlant->rename();
+            break;
+        }
+        case '0':
+        {
+            return;
+            break;
+        }
+        default:
+            break;
+        }
+
+        switch (commandNum)
+        {
+        case '1':
+        {
+            cout << "\nAnda telah menyiram\n";
+            break;
+        }
+        case '2':
+        {
+            cout << "\nAnda telah melewati satu hari\n";
+            break;
+        }
+        case '3':
+        {
+            break;
+        }
+        default:
+            break;
+        }
         commandNum = getch();
         cout << endl;
     }
@@ -428,13 +409,29 @@ void plantsListMenu()
         }
     } while (findPlantID(userInput) == 0);
 
-    plantsMenu(onlinePlant->plantHealth);
+    plantsMenu();
+}
+
+/*
+    Function ini dipake untuk mengolah data cuaca yang
+    ada sekarang, kemudian nanti akan mengubah cuaca di
+    kondisi berikutnya
+
+    function ini akan berjalan terus menerus selama
+    program berjalan dengan menggunakan fitur std::thread
+    kemudian ketika dibutuhkan data cuaca, akan berhenti
+    sejenak kemudian melanjutkannya
+*/
+void weatherNextCycle(char seed) // TODO slesaikan fitur cuaca
+{
+    while (true)
+    {
+    }
 }
 
 int main()
 {
     char mainMenuChoice;
-    char exitMenuChoice;
     string new_plantName;
     if (PLANTS_OWNED == 0)
     {
@@ -454,7 +451,8 @@ int main()
         cout << "Pilihan:\n";
         cout << "1. Kebun\n";
         cout << "2. Toko\n";
-        cout << "\n0. Exit\n";
+        cout << "3. Pengaturan\n\n";
+        cout << "0. Exit\n";
         mainMenuChoice = getch();
 
         if (mainMenuChoice == '1')
@@ -465,16 +463,18 @@ int main()
         {
             shopMainMenu();
         }
+        else if (mainMenuChoice == '3')
+        {
+            // TODO bikin fitur settings stelah semua logic jadi
+        }
         else if (mainMenuChoice == '0')
         {
-            cout << "\nApakah anda yakin ingin keluar? (Y/N) ";
-            cin >> exitMenuChoice;
-            if (exitMenuChoice == 'y' || exitMenuChoice == 'Y')
-            {
-                cout << "\nSee you next time\n\n";
-                system("pause");
-                return 0;
-            }
+            break;
         }
     }
+
+    system("cls");
+    cout << "See you next time\n\n";
+    system("pause");
+    return 0;
 }
