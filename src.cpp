@@ -125,15 +125,15 @@ struct plant
         if (plantHealth <= 0)
         {
             isAlive = false;
-            return;
         }
-        if (soilWetness <= 25)
+        if (soilWetness <= 25 && soilWetness > 0)
         {
-            plantHealth -= 15;
+            plantHealth -= 10;
         }
         else if (soilWetness <= 0)
         {
-            plantHealth -= 35;
+            soilWetness = 0;
+            plantHealth -= 18;
         }
     }
 } *head, *onlinePlant;
@@ -184,6 +184,11 @@ void finishDay()
     if (ENERGY == 0)
     {
         CURRENT_DAY++;
+        while (current != nullptr)
+        {
+            current->soilWetness -= GLOBAL_TEMPERATURE * 0.25;
+            current = current->next;
+        }
         if (CURRENT_DAY == 7)
         {
             CURRENT_DAY = 0;
@@ -191,22 +196,16 @@ void finishDay()
         cout << "Satu hari sudah dilewati.\nSekarang hari: " << CURRENT_DAY_NAME[CURRENT_DAY];
         if (CURRENT_DAY_NAME[CURRENT_DAY] == "Kamis")
         {
-            cout << "berhasil ke hari kamis\n";
             GLOBAL_TEMPERATURE = (CURRENT_DAY_NAME[CURRENT_DAY].length() * GLOBAL_TEMPERATURE) / 5 + 6;
             ENERGY = 5;
+            onlinePlant->checkHealth();
             return;
         }
-        while (current != nullptr)
-        {
-            current->soilWetness -= GLOBAL_TEMPERATURE * 0.25;
-            current = current->next;
-        }
-
-        GLOBAL_TEMPERATURE = (CURRENT_DAY_NAME[CURRENT_DAY].length() * GLOBAL_TEMPERATURE) / 5;
+        GLOBAL_TEMPERATURE = (CURRENT_DAY_NAME[CURRENT_DAY].length() * GLOBAL_TEMPERATURE) / 6 + 5;
+        onlinePlant->checkHealth();
         cout << endl;
         ENERGY = 5;
     }
-    return;
 }
 
 void buyToolsMenu()
@@ -383,14 +382,14 @@ void shopMainMenu()
     }
 }
 
-void plantsMenu(int &health)
+void plantsMenu()
 {
     char commandNum;
     while (true)
     {
         system("cls");
         cout << "======== Tanaman: " << onlinePlant->plantName << " ========" << endl;
-        if (health >= 0)
+        if (onlinePlant->isAlive)
         {
             cout << "Level: " << onlinePlant->plantLevel << endl;
             cout << "\nXP\t\t\t: " << onlinePlant->plantXP << endl;
@@ -460,7 +459,7 @@ void plantsMenu(int &health)
         commandNum = getch();
         cout << endl;
         onlinePlant->levelUp();
-        onlinePlant->checkHealth();
+        // onlinePlant->checkHealth();
     }
 }
 
@@ -489,7 +488,7 @@ void plantsListMenu()
             }
         } while (findPlantName(userInput) == 0);
 
-        plantsMenu(onlinePlant->plantHealth);
+        plantsMenu();
     }
 }
 
