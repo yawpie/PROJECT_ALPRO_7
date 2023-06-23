@@ -10,7 +10,6 @@ short int GLOBAL_TEMPERATURE = 26;
 short unsigned int CURRENT_DAY = 0;
 string CURRENT_DAY_NAME[7] = {"Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu", "Minggu"};
 short unsigned int ENERGY = 5;
-// todo bikin sistem untuk skip hari atau setelah menyiram tanaman beberapa kali bisa skip hari
 struct plant
 {
     bool isAlive = true;
@@ -111,6 +110,7 @@ struct plant
     {
         if (BALANCE_AMOUNT >= 200)
         {
+            BALANCE_AMOUNT -= 200;
             soilRichness = 20;
             soilWetness = 30;
             cout << "Berhasil Mengganti Tanah!\n";
@@ -141,7 +141,7 @@ struct plant
 void addPlant(string name)
 {
     PLANTS_OWNED++;
-    plant *newPlant = new plant();
+    plant *newPlant = new plant;
     plant *lastPlantNode = head;
     newPlant->plantName = name;
     newPlant->next = nullptr;
@@ -163,7 +163,6 @@ void addPlant(string name)
 
 bool findPlantName(string plantName)
 {
-
     plant *currentPlant = head;
     while (currentPlant != nullptr)
     {
@@ -305,14 +304,22 @@ void sellPlant(string plantName)
             {
                 prevPlant->next = currentPlant->next;
             }
-            BALANCE_AMOUNT += currentPlant->plantLevel * 1500 + currentPlant->plantXP * 10;
+            if (!currentPlant->isAlive)
+            {
+                cout << "Tanaman sudah mati, berhasil mengeluarkan tanaman dari kebun tanpa harga jual\n";
+            }
+            else
+            {
+                BALANCE_AMOUNT += currentPlant->plantLevel * 1500 + currentPlant->plantXP * 10;
+                cout << "harga jual: " << currentPlant->plantLevel * 1500 + currentPlant->plantXP * 10 << endl;
+                cout << "Tanaman berhasil dijual\n";
+                cout << "Saldo Anda sebelumnya: " << BALANCE_AMOUNT - (currentPlant->plantLevel * 1500 + currentPlant->plantXP * 10) << endl;
+                cout << "Saldo Anda saat ini: " << BALANCE_AMOUNT << endl;
+            }
+
+            PLANTS_OWNED--;
             // todo ketika ingin jual tanaman, akan melihat variabel plantHealth, semakin rendah health nya, semakin rendah harga jualnya. jika planthealth = 0 maka harga jual adalah 0
-            PLANTS_OWNED--;
             delete currentPlant;
-            cout << "Tanaman berhasil dijual\n";
-            PLANTS_OWNED--;
-            cout << "Saldo Anda sebelumnya: " << BALANCE_AMOUNT - 2500 << endl;
-            cout << "Saldo Anda saat ini: " << BALANCE_AMOUNT << endl;
             return;
         }
         prevPlant = currentPlant;
@@ -395,8 +402,8 @@ void plantsMenu()
             cout << "\nXP\t\t\t: " << onlinePlant->plantXP << endl;
             cout << "XP untuk Naik Level\t: " << onlinePlant->plantLevelUpThreshold << endl;
             cout << "Kesehatan\t\t: " << onlinePlant->plantHealth << endl;
-            cout << "Kebasahan\t\t: " << onlinePlant->soilWetness << endl;
-            cout << "Keelokan Tanah\t\t: " << onlinePlant->soilRichness << endl;
+            cout << "Kelembapan\t\t: " << onlinePlant->soilWetness << endl;
+            cout << "Kesuburan Tanah\t\t: " << onlinePlant->soilRichness << endl;
             cout << "\nPupuk\t\t\t: " << FERTILIZER_OWNED << endl;
             cout << "Hari\t\t\t: " << CURRENT_DAY_NAME[CURRENT_DAY] << endl;
             cout << "Suhu\t\t\t: " << GLOBAL_TEMPERATURE << endl;
@@ -459,7 +466,6 @@ void plantsMenu()
         commandNum = getch();
         cout << endl;
         onlinePlant->levelUp();
-        // onlinePlant->checkHealth();
     }
 }
 
